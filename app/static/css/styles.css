@@ -1,0 +1,413 @@
+/* Загальний стиль сторінки */
+
+
+/* Навігаційна панель */
+.navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.navbar a.nav-link {
+    color: #555;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.navbar a.nav-link:hover {
+    color: #5cb85c;
+}
+
+/* Стиль карток */
+.card {
+    
+    height: auto;
+    display: block;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Кнопки */
+.btn-custom {
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.btn-custom:hover {
+    background-color: #4cae4c;
+    transform: scale(1.05);
+}
+
+/* Стиль таблиць */
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.table td {
+    background-color: #fff;
+}
+
+/* Ефект наведення на рядки таблиці */
+.table tbody tr {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.table tbody tr:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    background-color: #fdfdfd;
+    position: relative;
+    z-index: 1;
+}
+
+/* Стилі для заголовків */
+h2, h3 {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Картки з топ клієнтами */
+.card-header {
+    background-color: #5bc0de;
+    color: #fff;
+    font-weight: 600;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.card-body ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.card-body li {
+    padding: 15px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Покращення карток для історії */
+.card-body table {
+    width: 200%;
+    margin-top: 15px;
+}
+
+.card-body table th, .card-body table td {
+    padding: 10px 15px;
+    text-align: center;
+}
+
+.card-body table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+/* Стиль для графіка */
+#topCustomersChart {
+    max-width: 100%;
+    margin-top: 20px;
+}
+
+
+/* Центрування canvas */
+canvas#topCustomersChart {
+    max-width: 100%;
+}
+
+/* Для таблиці в скролі */
+.card-body.overflow-auto table {
+    min-width: 400px;
+}
+
+/* Додатковий ефект для .list-group */
+.list-group-item {
+    transition: background-color 0.3s ease;
+}
+.list-group-item:hover {
+    background-color: #f0fdf4;
+}
+ 
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+ 
+  .progress-bar {
+    transition: width 1s ease-in-out;
+  }
+
+
+  
+  .timeline {
+    list-style: none;
+    padding: 0;
+    position: relative;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+  }
+  .timeline-item {
+    position: relative;
+    padding-left: 30px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 5px;
+    width: 10px;
+    height: 10px;
+    background: #0d6efd;
+    border-radius: 50%;
+  }
+  
+  .chart-wrapper {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  /* Стилі для затемнення фону */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5); /* півпрозоре затемнення */
+    z-index: 999; /* надає overlay висший пріоритет */
+}
+.no-scroll {
+    overflow: hidden; /* заблокувати прокручування */
+}
+.search-input {
+    border-radius: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25); /* Bootstrap focus ring */
+    border-color: #86b7fe;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+.container-fluid {
+    max-width: 2100px; /* або 1200px — як тобі зручніше */
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+.badge-custom-light {
+    background-color: #f8f9fa;
+    color: #212529;
+    border: 1px solid #dee2e6;
+}
+.badge-vip {
+    background: linear-gradient(90deg, #a770ef, #cf8bf3, #fdb99b); /* градієнт */
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+/* Прив'язка до картки через клас card-status-* */
+/* Стилі для карток з градієнтом лише по краю */
+/* Для карток VIP */
+.card-status-vip {
+    border: 10px solid !important;
+    border-image: linear-gradient(135deg, #a770ef, #cf8bf3, #fdb99b) 1 !important;
+ 
+  }
+  
+  /* Для карток лояльних клієнтів */
+  .card-status-loyal {
+    border: 10px solid !important;
+    border-image: linear-gradient(135deg, #f6d365, #fda085) 1 !important;
+    color: #212529 !important;
+  }
+  
+  /* Для карток стандартних клієнтів */
+  .card-status-default {
+    border: 10px solid !important;
+    border-image: linear-gradient(135deg, #003494, #cfdef3) 1 !important;
+    color: #212529 !important;
+  }
+  
+  .card-status-vip, .card-status-loyal, .card-status-default {
+    box-sizing: border-box;
+  }
+  
+ /* Основний стиль для таймлайну */
+.timeline {
+    position: relative !important;
+    padding-left: 30px !important;
+    border-left: 2px solid #ccc !important; /* Лінія ліворуч для таймлайну */
+    margin-left: 20px !important; /* Додатковий відступ */
+}
+
+/* Стилі для кожного елементу таймлайну */
+.timeline-item {
+    position: relative !important;
+    margin-bottom: 20px !important; /* Зменшити відступи між подіями */
+    animation: fadeIn 0.8s ease-in-out !important;
+    padding-left: 25px !important; /* Відступ для контенту */
+}
+
+/* Різні кольори для маркерів залежно від типу події */
+.timeline-marker {
+    position: absolute !important;
+    left: -8px !important; /* Позиція маркера на лінії */
+    top: 15px !important;
+    width: 20px !important; /* Збільшити розмір маркера */
+    height: 20px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+.timeline-marker.bg-success {
+    background-color: #28a745 !important; /* Зелений для додавання балів */
+    border: 2px solid #1d7430 !important; /* Трохи темніша обводка */
+}
+
+.timeline-marker.bg-danger {
+    background-color: #dc3545 !important; /* Червоний для зменшення балів */
+    border: 2px solid #b02a37 !important; /* Темніша обводка */
+}
+
+.timeline-marker.bg-warning {
+    background-color: #ffc107 !important; /* Жовтий для інших подій */
+    border: 2px solid #e0a800 !important; /* Трохи темніша обводка */
+}
+
+/* Стилі для контенту події */
+/* Стилі для контенту події */
+.timeline-content {
+    margin-left: 40px !important; /* Збільшити відступ між маркером і контентом */
+    background: linear-gradient(135deg, #f8f9fa, #e2e6ea) !important; /* Легкий градієнтний фон */
+    border-radius: 8px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    padding: 15px !important;
+    transition: all 0.3s ease-in-out !important;
+    width: 80% !important; /* Зменшити ширину картки */
+    max-width: 2000px !important; /* Максимальна ширина картки */
+}
+
+/* Під час наведення змінюємо фон */
+.timeline-content:hover {
+    background: linear-gradient(135deg, #e2e6ea, #f8f9fa) !important;
+}
+
+
+.timeline-content p {
+    font-size: 14px !important;
+}
+
+/* Стиль для заголовка події */
+.timeline-content strong {
+    font-size: 16px !important;
+    font-weight: bold !important;
+}
+
+/* Анімація для появи елементів */
+@keyframes fadeIn {
+    from {
+        opacity: 0 !important;
+        transform: translateY(20px) !important;
+    }
+    to {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+}
+
+/* Для плавного ефекту появи при скролі */
+.animate__animated.animate__fadeInUp {
+    animation-duration: 1s !important;
+    animation-fill-mode: both !important;
+}
+/* Різні кольори для маркерів залежно від типу події */
+.timeline-marker {
+    position: absolute !important;
+    left: -8px !important; /* Позиція маркера на лінії */
+    top: 15px !important;
+    width: 20px !important; /* Збільшити розмір маркера */
+    height: 20px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Червоний маркер для зменшення балів */
+.timeline-marker.bg-danger {
+    background-color: #dc3545 !important; /* Червоний для зменшення балів */
+    border: 2px solid #b02a37 !important; /* Темніша обводка */
+}
+
+/* Зелений маркер для нарахування балів */
+.timeline-marker.bg-success {
+    background-color: #28a745 !important; /* Зелений для додавання балів */
+    border: 2px solid #1d7430 !important; /* Трохи темніша обводка */
+}
+.filter-select {
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    padding: 10px 15px;
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .filter-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.25rem rgba(38, 143, 255, 0.5);
+  }
+  .chart-col {
+    padding-left: 200px; /* або margin-left, margin-right */
+    padding-right: 200px;
+  }
+  select.narrow-select {
+    max-width: 300px !important;
+}
+
+.row.align-top {
+    display: flex;
+    align-items: flex-start; /* вирівнюємо по верху */
+  }
+  
+  .row.align-top > .col-md-6 {
+    display: flex;
+    flex-direction: column;
+  }
+  

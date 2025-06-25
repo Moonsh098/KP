@@ -1,0 +1,302 @@
+from flask import Blueprint, render_template, request, redirect, url_for
+from models import Customer, Order, LoyaltyPointsHistory 
+from db import db
+from datetime import datetime
+
+routes = Blueprint('routes', __name__)
+
+@routes.route('/clients')
+def clients():
+    customers = Customer.query.all()
+    return render_template('clients.html', customers=customers)
+
+@routes.route('/orders')
+def orders():
+    orders = Order.query.all()
+    return render_template('orders.html', orders=orders)
+
+@routes.route('/add_customer', methods=['GET', 'POST'])
+def add_customer():
+    if request.method == 'POST':
+        # Обробка форми
+        name = request.form['name']
+        email = request.form['email']
+        phone = request.form['phone']
+        address = request.form['address']
+        loyalty_status = request.form['loyalty_status']
+
+        # Створення нового клієнта
+        customer = Customer(name=name, email=email, phone=phone, address=address, loyalty_status=loyalty_status)
+        db.session.add(customer)
+        db.session.commit()
+
+        # Після додавання клієнта переходимо на список
+        return redirect(url_for('routes.clients'))
+
+    # Показуємо форму тільки при GET-запиті
+    return render_template('add_customer.html')
+
+# Сторінка для видалення клієнта
+@routes.route('/delete_customer/<int:id>', methods=['GET'])
+def delete_customer(id):
+    customer = Customer.query.get_or_404(id)
+    db.session.delete(customer)
+    db.session.commit()
+    return redirect(url_for('routes.clients'))
+
+# Сторінка для редагування клієнта
+@routes.route('/edit_customer/<int:id>', methods=['GET', 'POST'])
+def edit_customer(id):
+    customer = Customer.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        customer.name = request.form['name']
+        customer.email = request.form['email']
+        customer.phone = request.form['phone']
+        customer.address = request.form['address']
+        customer.loyalty_status = request.form['loyalty_status']
+        
+        db.session.commit()
+        
+        return redirect(url_for('routes.clients'))
+    
+    return render_template('edit_customer.html', customer=customer)
+    
+@routes.route('/add_order', methods=['GET', 'POST'])
+def add_order():
+    customers = Customer.query.all()
+
+    if request.method == 'POST':
+        product_name = request.form['product_name']
+        quantity = int(request.form['quantity'])
+        price = float(request.form['price'])
+        customer_id = int(request.form['customer_id'])
+        order_date = datetime.strptime(request.form['order_date'], '%Y-%m-%d')
+        delivery_type = request.form['delivery_type']
+        delivery_address = request.form.get('delivery_address', '') if delivery_type == 'delivery' else ''
+        status = request.form['status']
+        comment = request.form.get('comment', '')
+        payment_status = request.form['payment_status']
+
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            flash('Клієнт не знайдений', 'error')
+            return redirect(url_for('routes.orders'))
+
+        # Обчислення кешбеку на основі статусу лояльності
+        total_price = quantity * price
+        if customer.loyalty_status == 'VIP':
+            loyalty_points = total_price * 0.06  # Кешбек для VIP
+            loyalty_status_points = total_price * 0.05
+        elif customer.loyalty_status == 'Лояльний клієнт':
+            loyalty_points = total_price * 0.03  # Кешбек для лояльних клієнтів
+            loyalty_status_points = total_price * 0.04
+        else:
+            loyalty_points = total_price * 0.02  # Кешбек для новачків
+            loyalty_status_points = total_price * 0.02
+
+        print(f"Кешбек передано: {loyalty_points}")  # Додано для діагностики
+
+        # Створення нового замовлення
+        new_order = Order(
+            product_name=product_name,
+            quantity=quantity,
+            price=price,
+            customer_id=customer_id,
+            order_date=order_date,
+            delivery_type=delivery_type,
+            delivery_address=delivery_address,
+            status=status,
+            comment=comment,
+            payment_status=payment_status
+        )
+
+        db.session.add(new_order)
+
+        if customer and payment_status == 'оплачено':
+            # Оновлення лояльності
+            loyalty_points_before = customer.loyalty_points or 0
+            loyalty_status_points_before = customer.loyalty_status_points or 0
+            loyalty_status_before = customer.loyalty_status
+
+            # Оновлення лояльності
+            customer.loyalty_points += loyalty_points
+            customer.loyalty_status_points += loyalty_status_points
+
+            # Оновлення статусу лояльності
+            if customer.loyalty_status_points >= 5000:
+                customer.loyalty_status = 'VIP'
+            elif customer.loyalty_status_points >= 1000:
+                customer.loyalty_status = 'Лояльний клієнт'
+            else:
+                customer.loyalty_status = 'Новачок'
+
+            # Додаємо історію лояльності
+            loyalty_history = LoyaltyPointsHistory(
+                customer_id=customer.id,
+                points=loyalty_points,
+                points_type='Знижка за кешбек',
+                description=f"Знижка {loyalty_points:.2f} грн за кешбек на замовлення {product_name}",
+                loyalty_points_before=loyalty_points_before,
+                loyalty_status_before=loyalty_status_before,
+                loyalty_status_points_before=loyalty_status_points_before,
+                loyalty_points_after=customer.loyalty_points,
+                loyalty_status_after=customer.loyalty_status,
+                loyalty_status_points_after=customer.loyalty_status_points,
+                date=datetime.utcnow()
+            )
+
+            db.session.add(loyalty_history)  # Зберігаємо історію
+            print("Оновлення клієнта та історії лояльності...")
+
+        db.session.commit()  # Завжди виконуємо commit після всіх змін
+
+        return redirect(url_for('routes.orders'))
+
+    return render_template('add_order.html', customers=customers)
+
+@routes.route('/delete_order/<int:id>', methods=['GET'])
+def delete_order(id):
+    order = Order.query.get_or_404(id)
+    db.session.delete(order)
+    db.session.commit()
+    return redirect(url_for('routes.orders'))
+
+from flask import flash
+
+
+
+@routes.route('/edit_order/<int:id>', methods=['GET', 'POST'])
+def edit_order(id):
+    order = Order.query.get_or_404(id)
+    old_payment_status = order.payment_status  # зберігаємо старий статус оплати
+
+    if request.method == 'POST':
+        # Отримуємо дані з форми
+        product_name = request.form['product_name']
+        quantity = int(request.form['quantity'])
+        price = float(request.form['price'])
+        customer_id = int(request.form['customer_id'])
+        delivery_type = request.form['delivery_type']
+        delivery_address = request.form['delivery_address']
+        status_uk = request.form['status']
+        comment = request.form.get('comment')
+        payment_status = request.form['payment_status']
+
+        # Збереження змін в базі даних
+        order.product_name = product_name
+        order.quantity = quantity
+        order.price = price
+        order.customer_id = customer_id
+        order.delivery_type = delivery_type
+        order.delivery_address = delivery_address
+        order.comment = comment
+        order.payment_status = payment_status
+
+        customer = Customer.query.get(customer_id)
+
+        # Якщо замовлення стало "Оплаченим", а раніше не було
+        if customer:
+            total_price = quantity * price
+            if customer.loyalty_status == 'VIP':
+                loyalty_points = total_price * 0.06
+                loyalty_status_points = total_price * 0.05
+            elif customer.loyalty_status == 'Лояльний клієнт':
+                loyalty_points = total_price * 0.03
+                loyalty_status_points = total_price * 0.04
+            else:
+                loyalty_points = total_price * 0.02
+                loyalty_status_points = total_price * 0.02
+
+            loyalty_points_before = customer.loyalty_points or 0
+            loyalty_status_points_before = customer.loyalty_status_points or 0
+            loyalty_status_before = customer.loyalty_status
+
+            customer.loyalty_points += loyalty_points
+            customer.loyalty_status_points += loyalty_status_points
+
+            # Оновлення статусу лояльності
+            if customer.loyalty_status_points >= 5000:
+                customer.loyalty_status = 'VIP'
+            elif customer.loyalty_status_points >= 1000:
+                customer.loyalty_status = 'Лояльний клієнт'
+            else:
+                customer.loyalty_status = 'Новачок'
+
+            # Додаємо історію лояльності
+            loyalty_history = LoyaltyPointsHistory(
+                customer_id=customer.id,
+                points=loyalty_points,
+                points_type='Знижка за кешбек',
+                description=f"Знижка {loyalty_points:.2f} грн за кешбек на замовлення {product_name}",
+                loyalty_points_before=loyalty_points_before,
+                loyalty_status_before=loyalty_status_before,
+                loyalty_status_points_before=loyalty_status_points_before,
+                loyalty_points_after=customer.loyalty_points,
+                loyalty_status_after=customer.loyalty_status,
+                loyalty_status_points_after=customer.loyalty_status_points,
+                date=datetime.utcnow()
+            )
+
+            db.session.add(loyalty_history)  # Зберігаємо історію
+            print("Оновлення клієнта та історії лояльності...")
+            db.session.commit()
+
+        # Якщо замовлення стало "Не оплачено" (відміняється оплата)
+        elif old_payment_status == 'Оплачено' and payment_status != 'Оплачено':
+            total_price = quantity * price
+            if customer.loyalty_status == 'VIP':
+                loyalty_points = total_price * 0.06
+                loyalty_status_points = total_price * 0.05
+            elif customer.loyalty_status == 'Лояльний клієнт':
+                loyalty_points = total_price * 0.03
+                loyalty_status_points = total_price * 0.04
+            else:
+                loyalty_points = total_price * 0.02
+                loyalty_status_points = total_price * 0.02
+
+            # Зменшуємо кешбек у клієнта
+            customer.loyalty_points -= loyalty_points
+            customer.loyalty_status_points -= loyalty_status_points
+
+            # Оновлення статусу лояльності
+            if customer.loyalty_status_points >= 5000:
+                customer.loyalty_status = 'VIP'
+            elif customer.loyalty_status_points >= 1000:
+                customer.loyalty_status = 'Лояльний клієнт'
+            else:
+                customer.loyalty_status = 'Новачок'
+
+            db.session.add(customer)
+            db.session.commit()
+
+        # Якщо статус змінився на "Скасовано"
+        if status_uk == 'Скасовано' and order.status != 'Скасовано':
+            history = LoyaltyPointsHistory.query.filter_by(
+                customer_id=customer.id,
+                description=f"Нараховано {order.quantity * order.price * 0.03:.2f} балів за замовлення {order.product_name}"
+            ).first()
+
+            if history:
+                customer.loyalty_points -= history.points
+                customer.loyalty_status_points -= history.loyalty_status_points_after - history.loyalty_status_points_before
+                db.session.delete(history)
+
+        print("Оновлення клієнта та історії лояльності...")
+        db.session.commit()
+
+        flash('Замовлення успішно оновлене!', 'success')
+        return redirect(url_for('routes.orders'))
+
+    customers = Customer.query.all()
+    status_choices = ['Очікується', 'Завершено', 'Скасовано']
+
+    return render_template('edit_order.html', order=order, customers=customers, status_choices=status_choices)
+
+
+@routes.route('/')
+def index():
+    return render_template('clients.html')
+
+
+

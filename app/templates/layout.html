@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Магазин меблів{% endblock %}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Custom Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<style>
+    body {
+        font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+    }
+
+    .navbar-brand {
+        font-weight: 600;
+    }
+
+    .table thead th,
+    .table td,
+    .table th {
+        vertical-align: middle;
+    }
+
+    .search-input {
+        max-width: 400px;
+    }
+</style>
+
+</head>
+<body class="bg-light">
+
+    <!-- Навігація -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container">
+            <!-- Ліва частина меню -->
+            <a class="navbar-brand" href="/clients">
+                <i class="bi bi-house-door-fill"></i> Магазин меблів
+            </a>
+            
+            {% if current_user.is_authenticated %}
+           
+            
+              <a href="{{ url_for('main.logout') }}" class="btn btn-outline-danger">
+                <i class="bi bi-box-arrow-right"></i> Вийти
+              </a>
+                                   
+              
+        {% else %}
+            <a href="{{ url_for('main.login') }}">Login</a>
+        {% endif %}
+        
+            <!-- Права частина меню (меню з іншими сторінками) -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/clients"><i class="bi bi-people-fill"></i> Клієнти</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders"><i class="bi bi-cart-check-fill"></i> Замовлення</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/loyalty_dashboard"><i class="bi bi-stars"></i> Програма лояльності</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+
+    <!-- Контент -->
+    <div class="container-fluid px-4 py-3">
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+</body>
+<style>
+    /* Загальний стиль сторінки */
+    
+   
+
+/* Перекриваємо фоновий колір для всіх елементів з класом bg-light */
+.bg-light {
+    background: linear-gradient(135deg, rgba(180, 105, 199, 0.9) 20%, rgba(189, 127, 127, 0.9) 60%, rgba(181, 176, 182, 0.9) 20%);
+background-size: cover !important;
+
+
+}
+
+
+
+
+    
+    /* Навігаційна панель */
+    .navbar {
+        background-color: #3f3e3e !important; /* Теплий помаранчевий фон */
+        border-bottom: 2px solid #000000 ; /* Тонка лінія на нижній частині */
+    }
+
+    .navbar-brand {
+        color: #ffffff !important; /* Білий текст для бренду */
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .navbar-nav .nav-link {
+        color: #f5f5f5 !important; /* Світлий текст для навігаційних посилань */
+        font-weight: 500;
+        transition: color 0.3s, transform 0.3s ease;
+    }
+
+    .navbar-nav .nav-link:hover {
+        color: #62009b !important; /* Помаранчевий колір при hover */
+        background-color: #ffffff !important; /* Білий фон при hover */
+        transform: translateY(-3px); /* Легке підняття при hover */
+    }
+
+    /* Кнопки */
+    .btn-primary {
+        background-color: #ff9f00 !important; /* Теплий помаранчевий для кнопок */
+        border-color: #ff9f00 !important;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: background-color 0.3s, transform 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #e67e00 !important; /* Темніший помаранчевий при hover */
+        border-color: #e67e00 !important;
+        transform: scale(1.05); /* Легке збільшення кнопки */
+    }
+
+    /* Стиль таблиць */
+    .table {
+        background-color: #ffffff !important; /* Білий фон для таблиць */
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Легка тінь */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Стиль для заголовків таблиць */
+    .table th {
+        background-color: #520088 !important; /* Помаранчевий фон для заголовків */
+        color: #ffffff !important; /* Білий текст для заголовків */
+        font-weight: 600 !important; /* Товстий шрифт */
+        text-align: center !important; /* Центрування тексту */
+    }
+
+    /* Стиль для всіх заголовків таблиць */
+    .table thead th {
+        background-color: #413341 !important; /* Помаранчевий фон */
+        color: #ffffff !important; /* Білий колір тексту */
+    }
+
+    /* Покращення стилю для інших елементів таблиці */
+    .table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+
+
+    .table tbody tr:hover {
+        background-color: #fdf2e9 !important; /* Легкий світло-помаранчевий фон при hover */
+        transform: translateY(-5px); /* Легке підняття рядка */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* М'яка тінь */
+    }
+
+    /* Стиль для поля пошуку */
+    .search-input {
+        max-width: 400px;
+        border-radius: 25px;
+        padding-left: 15px;
+        border: 2px solid #4d58f6 !important; /* Оранжевий бордер */
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        border-color: #ff7f00 !important; /* Темніший оранжевий при фокусуванні */
+        box-shadow: 0 0 0 0.25rem rgba(255, 159, 0, 0.25); /* Легке підсвічування */
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #b2babb;
+        font-size: 1.2rem;
+        pointer-events: none;
+    }
+
+    /* Стилі для карток */
+    .card {
+        border: none;
+        border-radius: 12px;
+        background-color: #ffffff !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2); /* Піднята тінь при hover */
+    }
+
+    /* Стилі для карток з клієнтами */
+    .card-header {
+        background-color: #f39c12 !important; /* Золотистий для заголовка карток */
+        color: #ffffff !important;
+        font-weight: 600;
+        border-radius: 12px 12px 0 0;
+    }
+
+    /* Стилі для віджетів/графіків */
+    .chart-wrapper {
+        max-width: 80%;
+        margin: 0 auto;
+    }
+
+    .timeline-item::before {
+        background-color: #ff9f00 !important; /* Помаранчевий для таймлайна */
+    }
+
+    /* Для картки з історією */
+    .card-body table th, .card-body table td {
+        padding: 15px 20px;
+    }
+</style>
+
+</html>

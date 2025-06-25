@@ -1,0 +1,336 @@
+{% extends "layout.html" %}
+{% block title %}Замовлення{% endblock %}
+
+{% block content %}
+<h1>Список замовлень</h1>
+
+<!-- Кнопка для відкриття модального вікна -->
+<a href="#" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addOrderModal">Додати нове замовлення</a>
+
+<!-- Модальне вікно додавання замовлення -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/add_order">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addOrderModalLabel">Додати нове замовлення</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Всі поля форми -->
+          <div class="form-group mb-3">
+            <label class="form-label">Назва товару</label>
+            <input type="text" name="product_name" class="form-control" required placeholder="Назва товару">
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Кількість</label>
+            <input type="number" name="quantity" class="form-control" required placeholder="Кількість товару">
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Ціна</label>
+            <input type="number" step="0.01" name="price" class="form-control" required placeholder="Ціна товару">
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Клієнт</label>
+            <select name="customer_id" id="customer-select" class="form-select" required onchange="updateCashbackLimit()">
+              {% for customer in customers %}
+                <option value="{{ customer.id }}" data-loyalty="{{ customer.loyalty_points }}">{{ customer.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Дата замовлення</label>
+            <input type="date" name="order_date" class="form-control" required>
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Тип доставки</label>
+            <select name="delivery_type" class="form-select" required onchange="toggleDeliveryAddress(this.value)">
+              <option value="pickup">Самовивіз</option>
+              <option value="delivery">Доставка</option>
+            </select>
+          </div>
+          <div class="form-group mb-3" id="delivery-address-group" style="display: none;">
+            <label class="form-label">Адреса доставки</label>
+            <input type="text" name="delivery_address" class="form-control" placeholder="Введіть адресу доставки">
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Статус</label>
+            <select name="status" class="form-select" required>
+              <option value="Очікується">Очікується</option>
+              <option value="Завершено">Завершено</option>
+              <option value="Скасовано">Скасовано</option>
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Статус оплати</label>
+            <select name="payment_status" class="form-select" required>
+              <option value="оплачено">Оплачено</option>
+              <option value="не оплачено">Не оплачено</option>
+            </select>
+          </div>
+          <div class="form-group mb-4">
+            <label for="cashbackPoints" class="form-label">Використати кешбек (балів)</label>
+            <input type="number" class="form-control form-control-sm" id="cashbackPoints" name="cashbackPoints" min="0" value="0" required>
+            <small id="cashbackHint" class="form-text text-muted">Максимум: 0</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+          <button type="submit" class="btn btn-primary">Додати замовлення</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Пошук і фільтри над таблицею -->
+<div class="mb-3 d-flex align-items-center gap-2" style="max-width: 600px;">
+  <div class="position-relative" style="max-width: 300px; flex-grow:1;">
+    <input type="text" id="orderSearchInput" class="form-control ps-5 form-control-sm" placeholder="Пошук...">
+    <i class="bi bi-search search-icon" style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); pointer-events: none;"></i>
+  </div>
+  
+  <select id="filterStatus" class="form-select w-auto">
+    <option value="all">Усі статуси</option>
+    <option value="Очікується">Очікується</option>
+    <option value="Завершено">Завершено</option>
+    <option value="Скасовано">Скасовано</option>
+  </select>
+
+  <select id="filterPayment" class="form-select w-auto">
+    <option value="all">Усі оплати</option>
+    <option value="оплачено">Оплачено</option>
+    <option value="не оплачено">Не оплачено</option>
+  </select>
+</div>
+
+<!-- Таблиця замовлень -->
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th data-sort="string">Продукт</th>
+      <th data-sort="number">Кількість</th>
+      <th data-sort="number">Ціна</th>
+      <th data-sort="string">Дата</th>
+      <th data-sort="string">Клієнт</th>
+      <th data-sort="string">Тип доставки</th>
+      <th data-sort="string">Адреса</th>
+      <th data-sort="string">Статус</th>
+      <th data-sort="string">Коментар</th>
+      <th data-sort="string">Оплата</th>
+      <th>Дії</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td>{{ order.product_name }}</td>
+      <td>{{ order.quantity }}</td>
+      <td>{{ order.price }}</td>
+      <td>{{ order.order_date }}</td>
+      <td>{{ order.customer.name if order.customer else 'Невідомий клієнт' }}</td>
+      <td>{{ order.delivery_type | translate_delivery_type }}</td>
+      <td>{{ order.delivery_address if order.delivery_type == 'delivery' else 'Самовивіз' }}</td>
+      <td>{{ order.status | translate_order_status }}</td>
+      <td>{{ order.comment }}</td>
+      <td>{{ order.payment_status }}</td>
+      <td>
+        <button type="button" class="btn btn-warning btn-sm edit-order-btn"
+          data-bs-toggle="modal" data-bs-target="#editOrderModal"
+          data-id="{{ order.id }}"
+          data-product_name="{{ order.product_name }}"
+          data-quantity="{{ order.quantity }}"
+          data-price="{{ order.price }}"
+          data-customer_id="{{ order.customer_id }}"
+          data-delivery_type="{{ order.delivery_type }}"
+          data-delivery_address="{{ order.delivery_address }}"
+          data-status="{{ order.status }}"
+          data-payment_status="{{ order.payment_status }}"
+          data-comment="{{ order.comment }}">
+          Редагувати
+        </button>
+        <form method="POST" action="/delete_order/{{ order.id }}" style="display:inline-block;" onsubmit="return confirm('Ви впевнені, що хочете видалити це замовлення?');">
+          <button type="submit" class="btn btn-danger btn-sm">Видалити</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Модальне вікно редагування -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" id="editOrderForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editOrderModalLabel">Редагувати замовлення</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="order_id" id="edit-order-id">
+          <div class="form-group mb-3">
+            <label>Назва товару</label>
+            <input type="text" name="product_name" id="edit-product_name" class="form-control" required>
+          </div>
+          <div class="form-group mb-3">
+            <label>Кількість</label>
+            <input type="number" name="quantity" id="edit-quantity" class="form-control" required>
+          </div>
+          <div class="form-group mb-3">
+            <label>Ціна</label>
+            <input type="number" step="0.01" name="price" id="edit-price" class="form-control" required>
+          </div>
+          <div class="form-group mb-3">
+            <label>Клієнт</label>
+            <select name="customer_id" id="edit-customer_id" class="form-select" required>
+              {% for customer in customers %}
+                <option value="{{ customer.id }}">{{ customer.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label>Тип доставки</label>
+            <select name="delivery_type" id="edit-delivery_type" class="form-select" required onchange="toggleDeliveryAddressEdit(this.value)">
+              <option value="pickup">Самовивіз</option>
+              <option value="delivery">Доставка</option>
+            </select>
+          </div>
+          <div class="form-group mb-3" id="edit-delivery-address-group" style="display: none;">
+            <label>Адреса доставки</label>
+            <input type="text" name="delivery_address" id="edit-delivery_address" class="form-control">
+          </div>
+          <div class="form-group mb-3">
+            <label>Статус</label>
+            <select name="status" id="edit-status" class="form-select" required>
+              <option value="Очікується">Очікується</option>
+              <option value="Завершено">Завершено</option>
+              <option value="Скасовано">Скасовано</option>
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label>Статус оплати</label>
+            <select name="payment_status" id="edit-payment_status" class="form-select" required>
+              <option value="оплачено">Оплачено</option>
+              <option value="не оплачено">Не оплачено</option>
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label>Коментар</label>
+            <textarea name="comment" id="edit-comment" class="form-control"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+          <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+function updateCashbackLimit() {
+  const select = document.getElementById("customer-select");
+  const points = select.options[select.selectedIndex].dataset.loyalty || 0;
+  document.getElementById("cashbackPoints").max = points;
+  document.getElementById("cashbackHint").innerText = `Максимум: ${points}`;
+}
+
+function toggleDeliveryAddress(value) {
+  document.getElementById('delivery-address-group').style.display = value === 'delivery' ? 'block' : 'none';
+}
+function toggleDeliveryAddressEdit(value) {
+  document.getElementById('edit-delivery-address-group').style.display = value === 'delivery' ? 'block' : 'none';
+}
+
+document.querySelectorAll('.edit-order-btn').forEach(button => {
+  button.addEventListener('click', function () {
+    const form = document.getElementById('editOrderForm');
+    const id = this.dataset.id;
+    form.action = `/edit_order/${id}`;
+    document.getElementById('edit-order-id').value = id;
+    document.getElementById('edit-product_name').value = this.dataset.product_name;
+    document.getElementById('edit-quantity').value = this.dataset.quantity;
+    document.getElementById('edit-price').value = this.dataset.price;
+    document.getElementById('edit-customer_id').value = this.dataset.customer_id;
+    document.getElementById('edit-delivery_type').value = this.dataset.delivery_type;
+    document.getElementById('edit-delivery_address').value = this.dataset.delivery_address;
+    document.getElementById('edit-status').value = this.dataset.status;
+    document.getElementById('edit-payment_status').value = this.dataset.payment_status;
+    document.getElementById('edit-comment').value = this.dataset.comment;
+    toggleDeliveryAddressEdit(this.dataset.delivery_type);
+  });
+});
+</script>
+<script>
+  function applyAllFilters() {
+    const filterText = document.getElementById('orderSearchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
+    const paymentFilter = document.getElementById('filterPayment').value.toLowerCase();
+
+    const rows = document.querySelectorAll('table tbody tr');
+
+    rows.forEach(row => {
+      const product = row.cells[0].textContent.toLowerCase();
+      const customer = row.cells[4].textContent.toLowerCase();
+      const status = row.cells[7].textContent.toLowerCase();
+      const payment = row.cells[9].textContent.toLowerCase();
+
+      const matchesText = product.includes(filterText) || customer.includes(filterText) || status.includes(filterText) || payment.includes(filterText);
+      const matchesStatus = statusFilter === 'all' || status === statusFilter;
+      const matchesPayment = paymentFilter === 'all' || payment === paymentFilter;
+
+      if (matchesText && matchesStatus && matchesPayment) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  document.getElementById('orderSearchInput').addEventListener('input', applyAllFilters);
+  document.getElementById('filterStatus').addEventListener('change', applyAllFilters);
+  document.getElementById('filterPayment').addEventListener('change', applyAllFilters);
+</script>
+
+<script>
+  const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+  const comparer = (idx, type, asc) => (a, b) => {
+    let v1 = getCellValue(a, idx);
+    let v2 = getCellValue(b, idx);
+
+    if (type === 'number') {
+      v1 = parseFloat(v1) || 0;
+      v2 = parseFloat(v2) || 0;
+    } else if (type === 'string') {
+      v1 = v1.toString().toLowerCase();
+      v2 = v2.toString().toLowerCase();
+    }
+
+    if (v1 > v2) return asc ? 1 : -1;
+    if (v1 < v2) return asc ? -1 : 1;
+    return 0;
+  };
+
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.style.cursor = 'pointer';
+    let asc = true;
+
+    th.addEventListener('click', () => {
+      const table = th.closest('table');
+      const tbody = table.querySelector('tbody');
+      const idx = Array.from(th.parentNode.children).indexOf(th);
+      const type = th.getAttribute('data-sort');
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort(comparer(idx, type, asc));
+      asc = !asc;
+
+      rows.forEach(row => tbody.appendChild(row));
+    });
+  });
+</script>
+
+{% endblock %}

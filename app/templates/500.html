@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block title %}Помилка серверу{% endblock %}
+
+{% block content %}
+    <h1>Помилка серверу 500</h1>
+    <p>Щось пішло не так. Спробуйте ще раз пізніше, або зверніться до адміністратора.</p>
+    <a href="{{ url_for('main.clients') }}" class="btn btn-primary">На головну</a>
+
+{% endblock %}

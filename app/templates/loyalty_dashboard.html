@@ -1,0 +1,330 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid px-5 px-md-9">
+
+  <h2 class="mb-4">Програма лояльності</h2>
+
+  
+  
+
+<!-- 🔁 Картки клієнтів -->
+<div class="row">
+  {% for customer in customers %}
+    <div class="col-md-6 col-xl-4 mb-4">
+      <div class="card position-relative p-3 shadow-lg h-100 border-0 rounded-lg 
+        {% if customer.loyalty_status == 'VIP' %}
+          card-status-vip
+        {% elif customer.loyalty_status == 'Лояльний клієнт' %}
+          card-status-loyal
+        {% else %}
+          card-status-default
+        {% endif %}">
+
+        <!-- Бейдж у правому верхньому куті -->
+        <span class="badge position-absolute top-0 end-0 m-2
+          {% if customer.loyalty_status == 'VIP' %}bg-secondary text-white badge-vip 
+          {% elif customer.loyalty_status == 'Лояльний клієнт' %}bg-warning text-dark
+          {% else %}badge-custom-light{% endif %}">
+          {% if customer.loyalty_status == 'VIP' %}👑 VIP
+          {% else %}{{ customer.loyalty_status or 'Новачок' }}{% endif %}
+        </span>
+
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <h5 class="text-uppercase mb-0">{{ customer.name }}</h5>
+          <canvas id="sparkline-{{ loop.index }}" height="50"></canvas>
+        </div>
+
+
+        <p class="mb-1">Бали: <span class="counter" data-target="{{ customer.loyalty_status_points }}">0</span></p>
+        <p class="mb-1">Кешбек: <span class="badge bg-success">{{ customer.loyalty_points }}</span></p>
+
+        <div class="progress" style="height: 8px;">
+          <div 
+            class="progress-bar"
+            role="progressbar"
+            data-value="{{ (customer.loyalty_status_points|default(0) / 5000 * 100)|round(0) }}" 
+            data-loyalty-status="{{ customer.loyalty_status }}"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Залишилось {{ customer.loyalty_status_points_needed }} балів до наступного статусу"
+            aria-valuenow="{{ customer.loyalty_status_points }}"
+            aria-valuemin="0"
+            aria-valuemax="100">
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- 🔍 Фільтр, сортування та пошук -->
+<div class="mb-4 filter-container d-flex justify-content-between align-items-center">
+  <select class="form-select filter-select w-auto" id="customerFilter" onchange="filterTimeline()">
+    <option value="all">Усі клієнти</option>
+    {% for customer in customers %}
+      <option value="{{ customer.name }}">{{ customer.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+<!-- 🔄 Таймлайн історії -->
+<div class="accordion mb-5 mx-auto" id="historyAccordion" style="max-width: 1800px;">
+  <div class="accordion-item" 
+       style="background: rgba(255, 255, 255, 0.2);  /* прозорий фон */
+              border: none; 
+              border-radius: 12px; 
+              backdrop-filter: blur(8px); 
+              -webkit-backdrop-filter: blur(8px);">
+    <h2 class="accordion-header d-flex justify-content-center" id="headingHistory">
+      <button class="accordion-button collapsed w-100"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseHistory"
+              aria-expanded="false"
+              aria-controls="collapseHistory">
+        Історія балів
+      </button>
+    </h2>
+    <div id="collapseHistory" class="accordion-collapse collapse" aria-labelledby="headingHistory" data-bs-parent="#historyAccordion">
+      <div class="accordion-body">
+        <div class="timeline" id="timeline">
+          {% for entry in history %}
+            <div class="timeline-item mb-3" data-customer="{{ entry.customer.name }}">
+              <div class="timeline-marker {% if entry.points_type == 'Зарахування балів' %}bg-success{% else %}bg-danger{% endif %}"></div>
+              <div class="timeline-content rounded shadow-sm p-3 animate__animated animate__fadeInUp">
+                <div class="d-flex justify-content-between">
+                  <strong>{{ entry.customer.name }}</strong>
+                  <small class="text-muted">{{ entry.date.strftime('%d.%m.%Y %H:%M') }}</small>
+                </div>
+                <p class="mb-1"><i class="fas fa-star text-warning me-2"></i>{{ entry.points_type }}: <strong>{{ entry.points }}</strong></p>
+                <p class="text-muted mb-1">Було: {{ entry.loyalty_points_before }}, Стало: {{ entry.loyalty_points_after }}</p>
+                <small>{{ entry.description }}</small>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row mt-5">
+ <div class="row">
+  <!-- Ліва колонка: селект + графік динаміки -->
+  <div class="col-md-6">
+    <label for="customerSelect" class="form-label">Оберіть клієнта:</label>
+    <select id="customerSelect" class="form-select narrow-select mb-3">
+      {% for customer in customers %}
+        <option value="{{ customer.id }}">{{ customer.name }}</option>
+      {% endfor %}
+    </select>
+
+    <h5 class="text-center">Динаміка балів (останні 10 записів)</h5>
+    <canvas id="pointsChart"></canvas>
+  </div>
+
+  <!-- Права колонка: лише графік розподілу статусів -->
+  <div class="col-md-6">
+    <h5 class="text-center">Розподіл статусів клієнтів</h5>
+    <canvas id="statusChart" style="max-width: 500px; max-height: 500px;"></canvas>
+  </div>
+</div>
+
+
+
+  
+ 
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+ 
+ <!-- Додано для Bootstrap Collapse -->
+  <script type="application/json" id="topCustomersData">
+    {{ top_customers | tojson }}
+  </script>
+  <script src="{{ url_for('static', filename='js/top_customers_chart.js') }}"></script>
+
+  <script>
+    const pointsChartLabels = {{ points_chart.labels | tojson }};
+    const pointsChartData = {{ points_chart.data | tojson }};
+    const statusChartLabels = {{ status_chart.labels | tojson }};
+    const statusChartData = {{ status_chart.data | tojson }};
+   
+  
+    console.log(statusChartLabels);
+console.log(statusChartData);
+
+  
+
+  document.addEventListener('DOMContentLoaded', () => {
+  const allHistory = {{ points_history_by_customer | tojson }};
+  const select = document.getElementById('customerSelect');
+  const ctxPoints = document.getElementById('pointsChart').getContext('2d');
+
+  // Ініціалізація графіка з даними першого клієнта
+  let currentHistory = allHistory[select.value] || [];
+
+  const pointsChart = new Chart(ctxPoints, {
+    type: 'line',
+    data: {
+      labels: currentHistory.map(h => h.date),
+      datasets: [{
+        label: 'Бали після транзакції',
+        data: currentHistory.map(h => h.points),
+        borderColor: '#198754',
+        backgroundColor: 'rgba(25, 135, 84, 0.2)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // Оновлення графіка при зміні вибору клієнта
+  select.addEventListener('change', () => {
+    const newHistory = allHistory[select.value] || [];
+    pointsChart.data.labels = newHistory.map(h => h.date);
+    pointsChart.data.datasets[0].data = newHistory.map(h => h.points);
+    pointsChart.update();
+  });
+});
+
+  
+    // Графік розподілу статусів
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: statusChartLabels,
+        datasets: [{
+          label: 'Кількість клієнтів',
+          data: statusChartData,
+          backgroundColor: ['#6f42c1', '#ffc107', '#0dcaf0' ],
+          borderColor: '#fff',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      // Ініціалізація тултипів для прогрес-барів
+      var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+  
+      document.querySelectorAll('.counter').forEach(counter => {
+  const target = +counter.getAttribute('data-target');
+  const duration = 200; // 💨 Швидше: зменши значення
+  const stepTime = Math.max(1, Math.floor(duration / target)); // мінімальний крок 1 мс
+  let count = 0;
+
+  const updateCounter = () => {
+  const increment = Math.ceil(target / 200); // рахуй по 50 кроків
+  count += increment;
+  if (count >= target) {
+    counter.textContent = target;
+  } else {
+    counter.textContent = count;
+    setTimeout(updateCounter, stepTime);
+  }
+};
+
+
+  updateCounter();
+});
+
+  
+      // Анімація прогрес-барів
+      document.querySelectorAll('.progress-bar').forEach(bar => {
+        const value = parseInt(bar.getAttribute('data-value')) || 0;
+        const status = bar.getAttribute('data-loyalty-status');
+  
+       
+// Кольори для кожного статусу лояльності
+if (status === 'VIP') {
+  bar.style.width = `${value}%`;
+  bar.style.background = 'linear-gradient(135deg, #a770ef, #cf8bf3, #fdb99b)'; // Градієнт для VIP
+} else if (status === 'Лояльний клієнт') {
+  bar.style.width = `${value}%`;
+  bar.style.background = 'linear-gradient(135deg, #f6d365, #fda085)'; // Градієнт для лояльного клієнта
+} else {
+  bar.style.width = `${value}%`;
+  bar.style.background = 'linear-gradient(135deg, #98c8e8, #87b4d2)'; // Темніший градієнт для новачка
+}
+
+
+  
+        // Перехід на наступний статус
+        const maxPoints = 5000; // Максимальна кількість балів для статусу 'VIP'
+        const midPoints = 1000; // Для 'Лояльного клієнта'
+        
+        let remainingPoints = 0;
+        if (value < 100) {
+          remainingPoints = Math.round((value / 100) * maxPoints); // Розрахунок залишку до переходу
+        }
+  
+        // Оновлення підказки для прогрес-бару
+        bar.setAttribute('title', `Залишилось до наступного статусу: ${remainingPoints} балів`);
+      });
+    });
+  </script>
+  
+  
+
+  <!-- 🔍 Фільтрація -->
+<!-- 🔍 Фільтрація -->
+<script>
+  function filterTimeline() {
+    console.log('Filtering...');
+  const selected = document.getElementById('customerFilter').value;
+  const timeline = document.getElementById('timeline');
+  const items = timeline.querySelectorAll('.timeline-item');
+  items.forEach(item => {
+    if (selected === 'all' || item.dataset.customer === selected) {
+      item.style.display = '';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+function sortTimeline() {
+  console.log('Sorting...');
+  const sortBy = document.getElementById('sortFilter').value;
+  const timeline = document.getElementById('timeline');
+  const items = Array.from(timeline.querySelectorAll('.timeline-item'));
+  items.sort((a, b) => {
+    const aDate = new Date(a.dataset.date);
+    const bDate = new Date(b.dataset.date);
+    const aPoints = parseInt(a.dataset.points);
+    const mainoints = parseInt(b.dataset.points);
+
+    if (sortBy === 'date') {
+      return aDate - bDate;
+    } else if (sortBy === 'points') {
+      return aPoints - mainoints;
+    }
+  });
+
+  items.forEach(item => timeline.appendChild(item)); 
+}
+</script>
+
+
+
+
+  
+{% endblock %}
+{% endblock %}

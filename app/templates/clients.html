@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+
+{% block title %}Клієнти{% endblock %}
+
+{% block content %}
+<h1>Список клієнтів</h1>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<div class="d-flex justify-content-start mb-4">
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+        Додати нового клієнта
+    </button>
+</div>
+
+<!-- Модальне вікно додавання -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="{{ url_for('main.add_customer') }}" method="post" class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCustomerModalLabel">Додати нового клієнта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'customer_form_fields.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="submit" class="btn btn-primary">Додати</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальне вікно редагування -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="editCustomerForm" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCustomerModalLabel">Редагувати клієнта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'customer_form_fields.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="submit" class="btn btn-primary">Зберегти</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="mb-3 position-relative" style="max-width: 500px;">
+    <input type="text" id="customerSearch" class="form-control ps-5 search-input form-control-sm" placeholder="Пошук...">
+    <i class="bi bi-search search-icon"></i>
+</div>
+
+
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Ім'я</th>
+            <th>Email</th>
+            <th>Телефон</th>
+            <th>Адреса</th>
+            <th>Статус лояльності</th>
+            <th>Кешбек</th>
+            <th>Бали статусу</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in customers %}
+        <tr>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.email }}</td>
+            <td>{{ customer.phone }}</td>
+            <td>{{ customer.address }}</td>
+            <td>{{ customer.loyalty_status }}</td>
+            <td>{{ customer.loyalty_points }}</td>
+            <td>{{ customer.loyalty_status_points }}</td>
+            <td>
+                <button class="btn btn-warning btn-sm"
+                        onclick="openEditCustomerModal({ 
+                            id: {{ customer.id }},
+                            name: '{{ customer.name|escape }}',
+                            email: '{{ customer.email|escape }}',
+                            phone: '{{ customer.phone|escape }}',
+                            address: '{{ customer.address|escape }}',
+                            loyalty_status: '{{ customer.loyalty_status|escape }}'
+                        })">Редагувати</button>
+                <a href="{{ url_for('main.delete_customer', id=customer.id) }}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Ви впевнені, що хочете видалити цього клієнта?')">Видалити</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    // Отримуємо базовий шлях до редагування з Jinja
+    const editCustomerUrlBase = "{{ url_for('main.edit_customer', id=0).replace('0', '') }}";
+
+    
+    function openEditCustomerModal(customer) {
+        const form = document.getElementById('editCustomerForm');
+        // Встановлюємо правильний маршрут для редагування
+        form.action = `/edit_customer/${customer.id}`;  <!-- Змінюємо це -->
+        
+        form.querySelector('[name="name"]').value = customer.name || '';
+        form.querySelector('[name="email"]').value = customer.email || '';
+        form.querySelector('[name="phone"]').value = customer.phone || '';
+        form.querySelector('[name="address"]').value = customer.address || '';
+        form.querySelector('[name="loyalty_status"]').value = customer.loyalty_status || '';
+
+        const modal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
+        modal.show();
+    }
+    // Пошук
+document.getElementById('customerSearch').addEventListener('input', function () {
+    const value = this.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        row.style.display = [...row.children].some(td => td.textContent.toLowerCase().includes(value)) ? '' : 'none';
+    });
+});
+
+// Сортування
+document.querySelectorAll('thead th').forEach((header, index) => {
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+        const table = header.closest('table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const isAsc = header.classList.contains('asc');
+        
+        rows.sort((a, b) => {
+            const aText = a.children[index].textContent.trim();
+            const bText = b.children[index].textContent.trim();
+            return isAsc
+                ? aText.localeCompare(bText, undefined, { numeric: true })
+                : bText.localeCompare(aText, undefined, { numeric: true });
+        });
+
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+        
+        document.querySelectorAll('thead th').forEach(h => h.classList.remove('asc', 'desc'));
+        header.classList.add(isAsc ? 'desc' : 'asc');
+    });
+});
+</script>
+
+{% endblock %}

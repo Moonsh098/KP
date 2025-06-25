@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block title %}Вхід{% endblock %}
+
+{% block content %}
+<style>
+  body {
+    background: url('/static/images/login-bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+  }
+
+  .login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+  }
+
+  .login-form {
+    background-color: rgba(255, 255, 255, 0.8); /* напівпрозорий білий */
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 100%;
+  }
+
+  .form-group label {
+    font-weight: bold;
+  }
+</style>
+
+<div class="login-wrapper">
+  <div class="login-form">
+    <!-- Повідомлення -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alert-container mb-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Форма входу -->
+    <form method="POST">
+      <div class="form-group mb-3">
+        <label for="username">Логін</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+      <div class="form-group mb-4">
+        <label for="password">Пароль</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Увійти</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
