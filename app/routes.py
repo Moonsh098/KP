@@ -57,6 +57,9 @@ def orders():
     return render_template('orders.html', orders=orders, customers=customers)
 
 
+@bp.route('/')
+def home():
+    return redirect(url_for('main.login'))
 
 
 @bp.route('/add_customer', methods=['GET', 'POST'])
@@ -372,15 +375,16 @@ def apply_loyalty_logic(order, customer, loyalty_points=0, deduct_points=False):
         customer.loyalty_status_points += loyalty_status_points
 
     # Оновлення статусу лояльності
-    if customer.loyalty_status_points >= 5000:
+    points = float(customer.loyalty_status_points or 0)
+    if points >= 5000:
         customer.loyalty_status = 'VIP'
         customer.loyalty_status_points_needed = 0  # Для VIP статусу немає наступного рівня
-    elif customer.loyalty_status_points >= 1000:
+    elif points >= 1500:
         customer.loyalty_status = 'Лояльний клієнт'
-        customer.loyalty_status_points_needed = 5000 - customer.loyalty_status_points
+        customer.loyalty_status_points_needed = round(5000 - points)
     else:
         customer.loyalty_status = 'Новачок'
-        customer.loyalty_status_points_needed = 1000 - customer.loyalty_status_points
+        customer.loyalty_status_points_needed = round(1500 - points)
 
     # Запис в історію про нарахування балів
     description = (

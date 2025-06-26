@@ -47,7 +47,7 @@
             data-loyalty-status="{{ customer.loyalty_status }}"
             data-bs-toggle="tooltip"
             data-bs-placement="top"
-            title="Залишилось {{ customer.loyalty_status_points_needed }} балів до наступного статусу"
+            
             aria-valuenow="{{ customer.loyalty_status_points }}"
             aria-valuemin="0"
             aria-valuemax="100">
@@ -151,9 +151,7 @@
     const statusChartData = {{ status_chart.data | tojson }};
    
   
-    console.log(statusChartLabels);
-console.log(statusChartData);
-
+ 
   
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -269,15 +267,21 @@ if (status === 'VIP') {
   
         // Перехід на наступний статус
         const maxPoints = 5000; // Максимальна кількість балів для статусу 'VIP'
-        const midPoints = 1000; // Для 'Лояльного клієнта'
+        const midPoints = 1500; // Для 'Лояльного клієнта'
         
         let remainingPoints = 0;
-        if (value < 100) {
-          remainingPoints = Math.round((value / 100) * maxPoints); // Розрахунок залишку до переходу
-        }
+if (status === 'Новачок') {
+  remainingPoints = 1500 - Math.round((value / 100) * 1000);
+} else if (status === 'Лояльний клієнт') {
+  remainingPoints = 5000 - Math.round((value / 100) * 5000);
+} else {
+  remainingPoints = 0; // VIP — немає наступного статусу
+}
+
   
         // Оновлення підказки для прогрес-бару
         bar.setAttribute('title', `Залишилось до наступного статусу: ${remainingPoints} балів`);
+       
       });
     });
   </script>
